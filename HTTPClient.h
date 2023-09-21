@@ -13,13 +13,16 @@ namespace wsApp
 	class HTTPClient
 	{
 	public:
-		HTTPClient();
+		HTTPClient(size_t buffLen = 4096);
 		~HTTPClient();
 
 		void connect(std::string_view address);
 		void disconnect();
-		int  sendRequest(RequestMethods requestMethod, std::string_view resPath = "/") const;
-		int  fetchResponse(std::vector<char>& outBuffer) const;
+		int  sendRequest(std::string_view request) const;
+		int  fetchResponse(std::vector<char>& dest);
+
+		std::string formatRequest(RequestMethods requestMethod,
+			std::string_view resPath = "/") const;
 
 		bool isConnected() const { return connected; }
 
@@ -30,6 +33,10 @@ namespace wsApp
 		std::string hostName{};
 
 		SOCKET connectSocket{ INVALID_SOCKET };
+		bool nonblocking{ true };
 		bool connected{ false };
+
+		const size_t buffLength{ 4096 };
+		std::vector<char> buffer{};
 	};
 }

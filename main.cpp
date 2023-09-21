@@ -1,27 +1,27 @@
+/*
+	Заметки:
+*/
+
 #include "HTTPClient.h"
 
-#include <WinSock2.h>
-#include <WS2tcpip.h>
-
 #include <iostream>
+#include <string>
 #include <vector>
-
-namespace config
-{
-	constexpr char hostName[]{ "www.google.com" };
-	constexpr size_t buffSize{ 4 * 1024 };
-}
 
 int main()
 {
+	constexpr char hostName[]{ "www.google.com" };
+
 	wsApp::HTTPClient client{};
-	client.connect(config::hostName);
-	client.sendRequest(wsApp::RequestMethods::HEAD);
+	client.connect(hostName);
 
-	std::vector<char> buffer(config::buffSize);
-	client.fetchResponse(buffer);
+	std::string req{ client.formatRequest(wsApp::RequestMethods::HEAD) };
+	client.sendRequest(req);
 
-	std::cout << '\n' << buffer.data() << '\n';
+	std::vector<char> response{};
+	client.fetchResponse(response);
+
+	std::cout << '\n' << response.data() << '\n';
 
 	return 0;
 }
