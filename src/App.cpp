@@ -68,11 +68,11 @@ namespace wsApp
 
 			// Вывод данных в консоль
 			Log::info("Query #" + std::to_string(count++));
-			std::copy(data.begin(), data.end(), std::ostream_iterator<char>(std::cout));
+			std::copy(data.begin(), data.end(), std::ostreambuf_iterator<char>(std::cout));
+			std::cout << std::flush;
 
 			// Удаление выведенных данных из контейнера
 			data.clear();
-
 			dataLock.unlock();
 			dmCondition.notify_one();
 		}
