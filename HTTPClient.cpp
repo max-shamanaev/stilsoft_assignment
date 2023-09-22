@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstdint>
 #include <iterator>
 #include <string>
 #include <sstream>
@@ -35,7 +36,7 @@ namespace wsApp
 	{
 		if (connected)
 		{
-			logError("The socket is already connected", WSAEISCONN);
+			Log::error("The socket is already connected", WSAEISCONN);
 			return;
 		}
 
@@ -44,7 +45,7 @@ namespace wsApp
 
 		if (errCode)
 		{
-			logError("Failed to getaddrinfo()", errCode);
+			Log::error("Failed to getaddrinfo()", errCode);
 			return;
 		}
 
@@ -60,7 +61,7 @@ namespace wsApp
 
 			if (connectSocket == INVALID_SOCKET)
 			{
-				logError("Failed to create socket", WSAGetLastError());
+				Log::error("Failed to create socket", WSAGetLastError());
 				return;
 			}
 
@@ -80,17 +81,17 @@ namespace wsApp
 		}
 
 		if (connectSocket == INVALID_SOCKET)
-			logError("Unable to connect to the server!", WSAGetLastError());
+			Log::error("Unable to connect to the server!", WSAGetLastError());
 		else
 		{
-			logInfo("Successfully connected to " + hostName);
+			Log::info("Successfully connected to " + hostName);
 
 			connected = true;
 			errCode = ioctlsocket(connectSocket, FIONBIO,
 				reinterpret_cast<u_long*>(&nonblocking));
 
 			if (errCode == SOCKET_ERROR)
-				logError("Error enabling non-blocking mode", WSAGetLastError());
+				Log::error("Error enabling non-blocking mode", WSAGetLastError());
 		}
 
 		freeaddrinfo(hostInfoList);
@@ -105,15 +106,17 @@ namespace wsApp
 	int HTTPClient::sendRequest(std::string_view request) const
 	{
 		assert(connected && "sendRequest() on unconnected socket");
-
+	
 		int bytesSent{ send(
-			connectSocket, 
-			request.data(), 
-			request.size(), 0) };
+		   connectSocket,
+		   request.data(),
+		   request.size(), 0) };
 
 		if (bytesSent == SOCKET_ERROR)
 		{
-			logError("Sending request failed", WSAGetLastError());
+			if (WSAGetLastError() != WSAEWOULDBLOCK)
+				Log::error("Sending request failed", WSAGetLastError());
+
 			return 0;
 		}
 		else
@@ -130,19 +133,15 @@ namespace wsApp
 		int descRdy{ 0 }, recvRes{ 0 };
 		fd_set readfds{};
 
-		// ѕри слишком низком таймауте сокет не будет
-		// определ€тьс€ как готовый к чтению
-		timeval timeout{ 0, 100'000 }; // 100ms
-
 		do
 		{
 			FD_ZERO(&readfds);
 			FD_SET(connectSocket, &readfds);
-			descRdy = select(0, &readfds, nullptr, nullptr, &timeout);
+			descRdy = select(0, &readfds, nullptr, nullptr, &fetchTimeout);
 
 			if (descRdy == SOCKET_ERROR)
 			{
-				logError("Failed to determine socket's status", WSAGetLastError());
+				Log::error("Failed to determine socket's status", WSAGetLastError());
 				return 0;
 			}
 
@@ -152,7 +151,7 @@ namespace wsApp
 
 				if (recvRes == SOCKET_ERROR)
 				{
-					logError("Fetching response failed", WSAGetLastError());
+					Log::error("Fetching response failed", WSAGetLastError());
 					return 0;
 				}
 				else if (recvRes == 0)
@@ -177,5 +176,11 @@ namespace wsApp
 			<< hostName << "\r\n\r\n";
 
 		return request.str();
+	}
+
+	void HTTPClient::setFetchTimeout(std::uint64_t usTimeout)
+	{
+		fetchTimeout.tv_sec  = static_cast<long>(usTimeout / 1'000'000);
+		fetchTimeout.tv_usec = static_cast<long>(usTimeout % 1'000'000);
 	}
 }

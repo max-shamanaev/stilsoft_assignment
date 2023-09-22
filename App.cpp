@@ -22,7 +22,14 @@ namespace wsApp
 
 		client->connect(hostAddress);
 
-		std::string request{ client->formatRequest(wsApp::RequestMethods::HEAD) };
+		if (!client->isConnected())
+			return;
+
+		std::string request{ client->formatRequest(wsApp::RequestMethods::GET) };
+
+		// Таймаут (в микросек) для того, чтобы данные
+		// медленнее заносились в консоль и были более читаемы		
+		client->setFetchTimeout(0);
 
 		std::thread queryThread{ &App::queryData, this,
 			std::ref(*client), std::ref(request)
@@ -42,27 +49,29 @@ namespace wsApp
 
 		queryThread.join();
 		handleThread.join();
+		Log::info("Exited");
 	}
 
 	void App::handleData()
 	{
-		std::unique_lock<std::mutex> lock{ dataMutex, std::defer_lock };
+		std::unique_lock<std::mutex> dataLock{ dataMutex, std::defer_lock };
 		size_t count{ 1 };
 		while (!stop)
 		{
-			lock.lock();
+			dataLock.lock();
 
 			// Контроль наличия считанных из сокета данных
-			dmCondition.wait(lock, [this] { return !data.empty(); });
+			while (data.empty() && !stop)
+				dmCondition.wait(dataLock);
 
 			// Вывод данных в консоль
-			logInfo("Query #" + std::to_string(count++));
+			Log::info("Query #" + std::to_string(count++));
 			std::copy(data.begin(), data.end(), std::ostream_iterator<char>(std::cout));
 
-			// Удаление выведенных данных
-			data.clear(); 
+			// Удаление выведенных данных из контейнера
+			data.clear();
 
-			lock.unlock();
+			dataLock.unlock();
 			dmCondition.notify_one();
 		}
 	}
@@ -77,17 +86,18 @@ namespace wsApp
 
 		// Бесконечная отправка http-запросов и
 		// получение результатов из сокета
-		std::unique_lock<std::mutex> lock{ dataMutex, std::defer_lock };
+		std::unique_lock<std::mutex> dataLock{ dataMutex, std::defer_lock };
 		while (!stop)
 		{
 			connectedClient.sendRequest(request);
 
-			lock.lock();
-			dmCondition.wait(lock, [this] { return data.empty(); });
+			dataLock.lock();
+			while (!data.empty() && !stop)
+				dmCondition.wait(dataLock);
 
 			connectedClient.fetchResponse(data);
 
-			lock.unlock();
+			dataLock.unlock();
 			dmCondition.notify_one();
 		}
 	}

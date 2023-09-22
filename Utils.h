@@ -5,6 +5,7 @@
 #include <cassert>
 #include <string_view>
 #include <iostream>
+#include <mutex>
 
 namespace wsApp
 {
@@ -27,19 +28,29 @@ namespace wsApp
 			return "OPTIONS";
 		default:
 			assert("Unimplemented conversion");
-			return "UNDEFINED";
+			return "";
 		}
 	}
 
-	inline void logError(std::string_view errMessage, int errCode) 
+	class Log
 	{
-		std::cerr << "[ERROR " << errCode << "]: " << errMessage << '\n';
-	}
+	public:
+		static void error(std::string_view errMessage, int errCode)
+		{
+			std::lock_guard<std::mutex> lock{ logMutex };
+			std::cout << "\033[31m[ERROR " << errCode << "]: "
+				<< errMessage << "\033[0m\n";
+		}
 
-	inline void logInfo(std::string_view message)
-	{
-		std::cout << "[INFO] " << message << '\n';
-	}
+		static void info(std::string_view message)
+		{
+			std::lock_guard<std::mutex> lock{ logMutex };
+			std::cout << "\033[32m[INFO] " << message << "\033[0m\n";
+		}
+
+	private:
+		static inline std::mutex logMutex{};
+	};
 
 	class WSAHandler
 	{
@@ -48,7 +59,7 @@ namespace wsApp
 		{
 			auto errCode{ WSAStartup(MAKEWORD(2, 2), &wsaData) };
 			if (errCode)
-				logError("Couldn't find usable WinSock DLL", errCode);
+				Log::info("Couldn't find usable WinSock DLL");
 		}
 
 		~WSAHandler()

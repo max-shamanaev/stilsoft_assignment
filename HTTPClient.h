@@ -4,6 +4,7 @@
 
 #include <WinSock2.h>
 
+#include <cstdint>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -24,6 +25,7 @@ namespace wsApp
 		std::string formatRequest(RequestMethods requestMethod,
 			std::string_view resPath = "/") const;
 
+		void setFetchTimeout(std::uint64_t usTimeout);
 		bool isConnected() const { return connected; }
 
 	private:
@@ -36,6 +38,7 @@ namespace wsApp
 		bool nonblocking{ true };
 		bool connected{ false };
 
+		timeval fetchTimeout{ 0, 0 };
 		const size_t buffLength{ 4096 };
 		std::vector<char> buffer{};
 	};
