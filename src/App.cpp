@@ -29,14 +29,11 @@ namespace wsApp
 
 		// Таймаут (в микросек) для того, чтобы данные
 		// медленнее заносились в консоль и были более читаемы
-		// (по умолчанию 1 ввиду п.6 задания)
-		// 
-		// Чем больше таймаут, тем стабильнее результаты без
-		// дополнительной синхронизации вывода в консоль
-		client->setFetchTimeout(1);
-
+		// (по умолчанию 0 ввиду п.6 задания)
+		client->setFetchTimeout(0);
+	
 		std::thread queryThread{ &App::queryData, this,
-			std::ref(*client), std::ref(request)
+			std::ref(*client), request
 		};
 		
 		std::thread handleThread{ &App::handleData, this };
@@ -71,11 +68,15 @@ namespace wsApp
 
 			// Вывод данных в консоль
 			Log::info("Query #" + std::to_string(count++));
-			std::copy(data.begin(), data.end(), std::ostreambuf_iterator<char>(std::cout));
-			std::cout << std::flush;
+
+			Log::getMutex().lock();
+			std::cout.write(data.data(), data.size());
+			std::cout << std::endl;
+			Log::getMutex().unlock();
 
 			// Удаление выведенных данных из контейнера
 			data.clear();
+
 			dataLock.unlock();
 			dmCondition.notify_one();
 		}

@@ -111,7 +111,7 @@ namespace wsApp
 	int HTTPClient::sendRequest(std::string_view request) const
 	{
 		assert(connected && "sendRequest() on unconnected socket");
-	
+
 		int bytesSent{ send(
 		   connectSocket,
 		   request.data(),
@@ -171,8 +171,9 @@ namespace wsApp
 
 		} while (descRdy > 0);
 
-		// Перенос ответа в предоставленный аргументом контейнер 
-		std::move(response.begin(), response.end(), std::back_inserter(dest));
+		// Перенос ответа в предоставленный аргументом контейнер
+		dest.resize(response.size());
+		std::move(response.begin(), response.end(), dest.begin());
 
 		return bytesRecieved;
 	}

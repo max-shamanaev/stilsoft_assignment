@@ -25,10 +25,11 @@ namespace wsApp
 		void queryData(HTTPClient& connectedClient, const std::string& request);
 
 		// ƒоменное им€ веб-сервера (вкл. 3 уровень) / его IP-адрес
-		const std::string hostAddress{ "www.google.com" };
+		const std::string hostAddress{ "www.example.org" };
 
 		//  онтейнер дл€ полученных от сервера данных
 		std::vector<char> data{};
+		bool dataReady{ false };
 
 		bool stop{ false };
 		std::mutex dataMutex{};

@@ -53,6 +53,8 @@ namespace wsApp
 			std::cout << "\033[32m[INFO] " << message << "\033[0m\n";
 		}
 
+		static std::mutex& getMutex() { return logMutex; }
+
 	private:
 		static inline std::mutex logMutex{};
 	};
