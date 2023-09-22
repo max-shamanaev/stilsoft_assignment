@@ -15,24 +15,24 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="src\App.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="HTTPClient.cpp">
+    <ClCompile Include="src\HTTPClient.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="App.cpp">
+    <ClCompile Include="src\main.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="HTTPClient.h">
+    <ClInclude Include="src\App.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="Utils.h">
+    <ClInclude Include="src\HTTPClient.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="App.h">
+    <ClInclude Include="src\Utils.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>

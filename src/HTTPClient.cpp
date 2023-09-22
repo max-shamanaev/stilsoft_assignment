@@ -19,11 +19,10 @@ namespace wsApp
 	{
 		assert(buffLen != 0 && "Buffer length was set to 0");
 
-		// Параметры адреса хоста, которые клиент ожидает
 		ZeroMemory(&hints, sizeof(hints));
 		hints.ai_flags    = AI_CANONNAME;
-		hints.ai_family   = AF_UNSPEC;		// IPv4/IPv6
-		hints.ai_socktype = SOCK_STREAM;	// TCP
+		hints.ai_family   = AF_UNSPEC;		
+		hints.ai_socktype = SOCK_STREAM;	
 		hints.ai_protocol = IPPROTO_TCP;
 	}
 
@@ -50,7 +49,9 @@ namespace wsApp
 		}
 
 		addrinfo* hostInfo{ hostInfoList };
-		hostName = hostInfo->ai_canonname;
+
+		// CNAME возвращается только для первого узла в списке
+		hostСName = hostInfo->ai_canonname; 
 
 		while (hostInfo != nullptr)
 		{
@@ -84,9 +85,11 @@ namespace wsApp
 			Log::error("Unable to connect to the server!", WSAGetLastError());
 		else
 		{
-			Log::info("Successfully connected to " + hostName);
+			Log::info("Successfully connected to " + hostСName);
 
 			connected = true;
+
+			// включение неблокирующего режима для сокета
 			errCode = ioctlsocket(connectSocket, FIONBIO,
 				reinterpret_cast<u_long*>(&nonblocking));
 
@@ -94,6 +97,8 @@ namespace wsApp
 				Log::error("Error enabling non-blocking mode", WSAGetLastError());
 		}
 
+		// Информация, возвращаемая getaddrinfo() динамически размещена
+		// и требует очистки
 		freeaddrinfo(hostInfoList);
 	}
 
@@ -135,6 +140,9 @@ namespace wsApp
 
 		do
 		{
+			// Определение готовности сокета к чтению.
+			// non-blocking мод и select() позволяют определить, когда
+			// передача от хоста завершена
 			FD_ZERO(&readfds);
 			FD_SET(connectSocket, &readfds);
 			descRdy = select(0, &readfds, nullptr, nullptr, &fetchTimeout);
@@ -163,6 +171,7 @@ namespace wsApp
 
 		} while (descRdy > 0);
 
+		// Перенос ответа в предоставленный аргументом контейнер 
 		std::move(response.begin(), response.end(), std::back_inserter(dest));
 
 		return bytesRecieved;
@@ -173,7 +182,7 @@ namespace wsApp
 	{
 		std::stringstream request{};
 		request << rmtosv(requestMethod) << ' ' << resPath << " HTTP/1.1\r\nHost: "
-			<< hostName << "\r\n\r\n";
+			<< hostСName << "\r\n\r\n";
 
 		return request.str();
 	}

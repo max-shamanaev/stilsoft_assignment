@@ -25,10 +25,11 @@ namespace wsApp
 		if (!client->isConnected())
 			return;
 
-		std::string request{ client->formatRequest(wsApp::RequestMethods::GET) };
+		std::string request{ client->formatRequest(wsApp::RequestMethods::HEAD) };
 
 		// Таймаут (в микросек) для того, чтобы данные
-		// медленнее заносились в консоль и были более читаемы		
+		// медленнее заносились в консоль и были более читаемы
+		// (по умолчанию 0 ввиду п.6 задания)
 		client->setFetchTimeout(0);
 
 		std::thread queryThread{ &App::queryData, this,
@@ -52,6 +53,7 @@ namespace wsApp
 		Log::info("Exited");
 	}
 
+	// Обработка поступаемого потока данных
 	void App::handleData()
 	{
 		std::unique_lock<std::mutex> dataLock{ dataMutex, std::defer_lock };
@@ -76,6 +78,8 @@ namespace wsApp
 		}
 	}
 
+	// Бесконечная отправка http-запросов и
+	// получение результатов из сокета
 	void App::queryData(HTTPClient& connectedClient, const std::string& request)
 	{
 		// Проверка установленного соединения опущена.
@@ -84,8 +88,6 @@ namespace wsApp
 		// данную ошибку можно расценивать как
 		// фатальную/нефатальную
 
-		// Бесконечная отправка http-запросов и
-		// получение результатов из сокета
 		std::unique_lock<std::mutex> dataLock{ dataMutex, std::defer_lock };
 		while (!stop)
 		{

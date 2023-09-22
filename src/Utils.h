@@ -32,6 +32,11 @@ namespace wsApp
 		}
 	}
 
+	// Thread-safe базовый лог
+	// 
+	// Примечание: используются ескейп-коды
+	// для раскрашивания лог сообщений, которые
+	// могут не поддерживаться некоторыми терминалами
 	class Log
 	{
 	public:
@@ -52,6 +57,8 @@ namespace wsApp
 		static inline std::mutex logMutex{};
 	};
 
+	// RAII-style обертка для автоматической
+	// инициализации и очистки winsock dll
 	class WSAHandler
 	{
 	public:

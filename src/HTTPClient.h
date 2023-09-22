@@ -11,6 +11,14 @@
 
 namespace wsApp
 {
+	// Класс представляет собой http-клиента, взаимодействующего с каким-либо
+	// сервером и получающего от него данные по запросу.
+	// 
+	// Ошибки обрабатываются без помощи исключений
+	//
+	// В реализации используется протокол TCP, потоковый тип сокета, и
+	// неблокирующий режим сокета
+	//
 	class HTTPClient
 	{
 	public:
@@ -31,8 +39,11 @@ namespace wsApp
 	private:
 		WSAHandler wsa{};
 
+		// Поддерживаемые клиентом параметры сокета
 		addrinfo hints{};
-		std::string hostName{};
+
+		// Каноническое имя домена
+		std::string hostСName{};
 
 		SOCKET connectSocket{ INVALID_SOCKET };
 		bool nonblocking{ true };

@@ -2,7 +2,6 @@
 
 #include "HTTPClient.h"
 
-#include <chrono>
 #include <condition_variable>
 #include <mutex>
 #include <string>
@@ -10,6 +9,9 @@
 
 namespace wsApp
 {
+	// Класс программы, реализующей функционал http-клиента с использованием
+	// нескольких синхронизированных потоков, взаимодействующих между собой
+	//
 	class App
 	{
 	public:
@@ -22,7 +24,7 @@ namespace wsApp
 		// Запрос данных у сервера
 		void queryData(HTTPClient& connectedClient, const std::string& request);
 
-		// Доменное имя веб-сервера / его IP-адрес
+		// Доменное имя веб-сервера (вкл. 3 уровень) / его IP-адрес
 		const std::string hostAddress{ "www.google.com" };
 
 		// Контейнер для полученных от сервера данных
