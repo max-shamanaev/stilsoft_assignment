@@ -33,7 +33,12 @@ namespace wsApp
 
 	inline void logError(std::string_view errMessage, int errCode) 
 	{
-		std::cerr << "[Error " << errCode << "]: " << errMessage << '\n';
+		std::cerr << "[ERROR " << errCode << "]: " << errMessage << '\n';
+	}
+
+	inline void logInfo(std::string_view message)
+	{
+		std::cout << "[INFO] " << message << '\n';
 	}
 
 	class WSAHandler

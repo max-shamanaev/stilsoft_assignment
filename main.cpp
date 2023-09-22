@@ -1,27 +1,12 @@
-/*
-	Заметки:
-*/
-
-#include "HTTPClient.h"
-
-#include <iostream>
-#include <string>
-#include <vector>
+#include "App.h"
 
 int main()
 {
-	constexpr char hostName[]{ "www.google.com" };
+	wsApp::App* app{ new wsApp::App() };
 
-	wsApp::HTTPClient client{};
-	client.connect(hostName);
+	app->run();
 
-	std::string req{ client.formatRequest(wsApp::RequestMethods::HEAD) };
-	client.sendRequest(req);
-
-	std::vector<char> response{};
-	client.fetchResponse(response);
-
-	std::cout << '\n' << response.data() << '\n';
+	delete app;
 
 	return 0;
 }

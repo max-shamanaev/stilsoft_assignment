@@ -1,11 +1,12 @@
 #include "HTTPClient.h"
+#include "Utils.h"
 
+#include <WinSock2.h>
 #include <Winerror.h>
 #include <WS2tcpip.h>
 
 #include <algorithm>
 #include <cassert>
-#include <iostream>
 #include <iterator>
 #include <string>
 #include <sstream>
@@ -82,7 +83,7 @@ namespace wsApp
 			logError("Unable to connect to the server!", WSAGetLastError());
 		else
 		{
-			std::cout << "Successfully connected to " << hostName << '\n';
+			logInfo("Successfully connected to " + hostName);
 
 			connected = true;
 			errCode = ioctlsocket(connectSocket, FIONBIO,
@@ -103,11 +104,7 @@ namespace wsApp
 
 	int HTTPClient::sendRequest(std::string_view request) const
 	{
-		if (!connected)
-		{
-			logError("Socket is not connected in order to send request", WSAENOTCONN);
-			return 0;
-		}
+		assert(connected && "sendRequest() on unconnected socket");
 
 		int bytesSent{ send(
 			connectSocket, 
@@ -126,19 +123,15 @@ namespace wsApp
 
 	int HTTPClient::fetchResponse(std::vector<char>& dest)
 	{
-		if (!connected)
-		{
-			logError("Socket is not connected in order to fetch response", WSAENOTCONN);
-			return 0;
-		}
+		assert(connected && "fetchResponse() on unconnected socket");
 
 		std::string response{};
 		int bytesRecieved{ 0 };
 		int descRdy{ 0 }, recvRes{ 0 };
 		fd_set readfds{};
 
-		// ѕри слишком низком таймауте сокет не
-		// определ€етс€ как готовый к чтению
+		// ѕри слишком низком таймауте сокет не будет
+		// определ€тьс€ как готовый к чтению
 		timeval timeout{ 0, 100'000 }; // 100ms
 
 		do
@@ -175,7 +168,6 @@ namespace wsApp
 
 		return bytesRecieved;
 	}
-	
 
 	std::string HTTPClient::formatRequest(RequestMethods requestMethod,
 		std::string_view resPath) const
