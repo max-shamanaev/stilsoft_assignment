@@ -103,7 +103,7 @@ namespace wsApp
 				stateChange.notify_all();
 				break;
 			}
-			else if (bytesSent == 0)
+			else if (bytesSent >= 0 && bytesSent < request.size())
 			{
 				std::this_thread::sleep_for(sendTimeout);
 				continue;
@@ -114,7 +114,7 @@ namespace wsApp
 				stateChange.wait(dataLock);
 
 			connectedClient.fetchResponse(data);
-
+			
 			dataLock.unlock();
 			stateChange.notify_one();
 		}

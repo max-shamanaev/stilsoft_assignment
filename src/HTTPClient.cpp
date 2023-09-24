@@ -182,7 +182,10 @@ namespace wsApp
 		if (bytesRecieved > dest.capacity())
 			dest.resize(bytesRecieved);
 
-		// Перенос ответа в предоставленный коллером контейнер
+		// Перенос ответа в предоставленный коллером контейнер.
+		// Укорачиваем response, чтобы не переносить нулевые элементы
+		// после reserve в начале функции
+		response.resize(bytesRecieved); 
 		dest.insert(dest.begin(), response.begin(), response.end());
 
 		return bytesRecieved;
