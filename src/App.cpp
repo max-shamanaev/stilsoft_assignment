@@ -24,7 +24,7 @@ namespace wsApp
 		if (!client->isConnected())
 			return;
 
-		std::string request{ client->formatRequest(wsApp::RequestMethods::HEAD) };
+		std::string request{ client->formatRequest(wsApp::RequestMethods::GET) };
 
 		// “аймаут (в микросек) дл€ того, чтобы данные
 		// медленнее считывались с сервера, что ведет
@@ -103,7 +103,7 @@ namespace wsApp
 				stateChange.notify_all();
 				break;
 			}
-			else if (bytesSent == 0)
+			else if (bytesSent >= 0 && bytesSent < request.size())
 			{
 				std::this_thread::sleep_for(sendTimeout);
 				continue;
@@ -114,7 +114,7 @@ namespace wsApp
 				stateChange.wait(dataLock);
 
 			connectedClient.fetchResponse(data);
-
+			
 			dataLock.unlock();
 			stateChange.notify_one();
 		}
