@@ -50,8 +50,8 @@ namespace wsApp
 
 		addrinfo* hostInfo{ hostInfoList };
 
-		// CNAME возвращается только для первого узла в списке
-		hostСName = hostInfo->ai_canonname; 
+		// CNAME РІРѕР·РІСЂР°С‰Р°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ РґР»СЏ РїРµСЂРІРѕРіРѕ СѓР·Р»Р° РІ СЃРїРёСЃРєРµ
+		hostРЎName = hostInfo->ai_canonname; 
 
 		while (hostInfo != nullptr)
 		{
@@ -85,11 +85,11 @@ namespace wsApp
 			Log::error("Unable to connect to the server!", WSAGetLastError());
 		else
 		{
-			Log::info("Successfully connected to " + hostСName);
+			Log::info("Successfully connected to " + hostРЎName);
 
 			connected = true;
 
-			// включение неблокирующего режима для сокета
+			// РІРєР»СЋС‡РµРЅРёРµ РЅРµР±Р»РѕРєРёСЂСѓСЋС‰РµРіРѕ СЂРµР¶РёРјР° РґР»СЏ СЃРѕРєРµС‚Р°
 			errCode = ioctlsocket(connectSocket, FIONBIO,
 				reinterpret_cast<u_long*>(&nonblocking));
 
@@ -97,8 +97,8 @@ namespace wsApp
 				Log::error("Error enabling non-blocking mode", WSAGetLastError());
 		}
 
-		// Информация, возвращаемая getaddrinfo() динамически размещена
-		// и требует очистки
+		// РРЅС„РѕСЂРјР°С†РёСЏ, РІРѕР·РІСЂР°С‰Р°РµРјР°СЏ getaddrinfo() РґРёРЅР°РјРёС‡РµСЃРєРё СЂР°Р·РјРµС‰РµРЅР°
+		// Рё С‚СЂРµР±СѓРµС‚ РѕС‡РёСЃС‚РєРё
 		freeaddrinfo(hostInfoList);
 	}
 
@@ -123,7 +123,7 @@ namespace wsApp
 			if ((errCode == WSAECONNRESET || errCode == WSAECONNABORTED)
 				&& errCode != WSAEWOULDBLOCK)
 			{
-				// Fatal. Дальнейшие попытки отправки запроса бессмысленны 
+				// Fatal. Р”Р°Р»СЊРЅРµР№С€РёРµ РїРѕРїС‹С‚РєРё РѕС‚РїСЂР°РІРєРё Р·Р°РїСЂРѕСЃР° Р±РµСЃСЃРјС‹СЃР»РµРЅРЅС‹ 
 				Log::error("Fatal connection error occured during sending request", errCode);
 				return -1;
 			}
@@ -138,7 +138,7 @@ namespace wsApp
 	{
 		assert(connected && "fetchResponse() on unconnected socket");
 
-		// Временный вектор для сбора ответа на запрос по частям
+		// Р’СЂРµРјРµРЅРЅС‹Р№ РІРµРєС‚РѕСЂ РґР»СЏ СЃР±РѕСЂР° РѕС‚РІРµС‚Р° РЅР° Р·Р°РїСЂРѕСЃ РїРѕ С‡Р°СЃС‚СЏРј
 		std::vector<char> response{};
 		response.reserve(buffLength);
 
@@ -148,9 +148,9 @@ namespace wsApp
 
 		do
 		{
-			// Определение готовности сокета к чтению.
-			// non-blocking мод и select() позволяют определить, когда
-			// передача от хоста завершена
+			// РћРїСЂРµРґРµР»РµРЅРёРµ РіРѕС‚РѕРІРЅРѕСЃС‚Рё СЃРѕРєРµС‚Р° Рє С‡С‚РµРЅРёСЋ.
+			// non-blocking РјРѕРґ Рё select() РїРѕР·РІРѕР»СЏСЋС‚ РѕРїСЂРµРґРµР»РёС‚СЊ, РєРѕРіРґР°
+			// РїРµСЂРµРґР°С‡Р° РѕС‚ С…РѕСЃС‚Р° Р·Р°РІРµСЂС€РµРЅР°
 			FD_ZERO(&readfds);
 			FD_SET(connectSocket, &readfds);
 			descRdy = select(0, &readfds, nullptr, nullptr, &fetchTimeout);
@@ -182,9 +182,9 @@ namespace wsApp
 		if (bytesRecieved > dest.capacity())
 			dest.resize(bytesRecieved);
 
-		// Перенос ответа в предоставленный коллером контейнер.
-		// Укорачиваем response, чтобы не переносить нулевые элементы
-		// после reserve в начале функции
+		// РџРµСЂРµРЅРѕСЃ РѕС‚РІРµС‚Р° РІ РїСЂРµРґРѕСЃС‚Р°РІР»РµРЅРЅС‹Р№ РєРѕР»Р»РµСЂРѕРј РєРѕРЅС‚РµР№РЅРµСЂ.
+		// РЈРєРѕСЂР°С‡РёРІР°РµРј response, С‡С‚РѕР±С‹ РЅРµ РїРµСЂРµРЅРѕСЃРёС‚СЊ РЅСѓР»РµРІС‹Рµ СЌР»РµРјРµРЅС‚С‹
+		// РїРѕСЃР»Рµ reserve РІ РЅР°С‡Р°Р»Рµ С„СѓРЅРєС†РёРё
 		response.resize(bytesRecieved); 
 		dest.insert(dest.begin(), response.begin(), response.end());
 
@@ -196,7 +196,7 @@ namespace wsApp
 	{
 		std::stringstream request{};
 		request << rmtosv(requestMethod) << ' ' << resPath << " HTTP/1.1\r\n"
-			<< "Host: " << hostСName << "\r\n\r\n";
+			<< "Host: " << hostРЎName << "\r\n\r\n";
 
 		return request.str();
 	}
