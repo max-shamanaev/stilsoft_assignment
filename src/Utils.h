@@ -53,30 +53,26 @@ namespace wsApp
 			std::cout << "\033[32m[INFO] " << message << "\033[0m\n";
 		}
 
-		static std::mutex& getMutex() { return logMutex; }
-
 	private:
 		static inline std::mutex logMutex{};
 	};
 
 	// RAII-style обертка для автоматической
 	// инициализации и очистки winsock dll
+	// для каждого HTTPClient-а
 	class WSAHandler
 	{
 	public:
 		WSAHandler() 
 		{
 			auto errCode{ WSAStartup(MAKEWORD(2, 2), &wsaData) };
-			if (errCode)
-				Log::info("Couldn't find usable WinSock DLL");
+			assert(!errCode && "Couldn't find usable WinSock DLL");
 		}
 
 		~WSAHandler()
 		{
 			WSACleanup(); 
 		}
-
-		const WSADATA& get() const { return wsaData; }
 
 	private:
 		WSADATA wsaData{};

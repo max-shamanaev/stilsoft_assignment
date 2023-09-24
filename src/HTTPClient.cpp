@@ -119,21 +119,29 @@ namespace wsApp
 
 		if (bytesSent == SOCKET_ERROR)
 		{
-			if (WSAGetLastError() != WSAEWOULDBLOCK)
-				Log::error("Sending request failed", WSAGetLastError());
-
+			auto errCode{ WSAGetLastError() };
+			if ((errCode == WSAECONNRESET || errCode == WSAECONNABORTED)
+				&& errCode != WSAEWOULDBLOCK)
+			{
+				// Fatal. Дальнейшие попытки отправки запроса бессмысленны 
+				Log::error("Fatal connection error occured during sending request", errCode);
+				return -1;
+			}
+			
 			return 0;
 		}
 		else
 			return bytesSent;
-			
 	}
-
+	
 	int HTTPClient::fetchResponse(std::vector<char>& dest)
 	{
 		assert(connected && "fetchResponse() on unconnected socket");
 
-		std::string response{};
+		// Временный вектор для сбора ответа на запрос по частям
+		std::vector<char> response{};
+		response.reserve(buffLength);
+
 		int bytesRecieved{ 0 };
 		int descRdy{ 0 }, recvRes{ 0 };
 		fd_set readfds{};
@@ -165,15 +173,17 @@ namespace wsApp
 				else if (recvRes == 0)
 					break;
 
-				response += buffer.data();
+				response.insert(response.end(), buffer.begin(), buffer.end());
 				bytesRecieved += recvRes;
 			}
 
 		} while (descRdy > 0);
 
-		// Перенос ответа в предоставленный аргументом контейнер
-		dest.resize(response.size());
-		std::move(response.begin(), response.end(), dest.begin());
+		if (bytesRecieved > dest.capacity())
+			dest.resize(bytesRecieved);
+
+		// Перенос ответа в предоставленный коллером контейнер
+		dest.insert(dest.begin(), response.begin(), response.end());
 
 		return bytesRecieved;
 	}
@@ -182,8 +192,8 @@ namespace wsApp
 		std::string_view resPath) const
 	{
 		std::stringstream request{};
-		request << rmtosv(requestMethod) << ' ' << resPath << " HTTP/1.1\r\nHost: "
-			<< hostСName << "\r\n\r\n";
+		request << rmtosv(requestMethod) << ' ' << resPath << " HTTP/1.1\r\n"
+			<< "Host: " << hostСName << "\r\n\r\n";
 
 		return request.str();
 	}

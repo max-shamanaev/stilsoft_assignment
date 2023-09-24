@@ -2,6 +2,7 @@
 
 #include "HTTPClient.h"
 
+#include <chrono>
 #include <condition_variable>
 #include <mutex>
 #include <string>
@@ -24,15 +25,20 @@ namespace wsApp
 		// Запрос данных у сервера
 		void queryData(HTTPClient& connectedClient, const std::string& request);
 
-		// Доменное имя веб-сервера (вкл. 3 уровень) / его IP-адрес
-		const std::string hostAddress{ "www.example.org" };
+		// IP-адрес хоста / его доменное имя
+		const std::string hostAddress{ "example.org" };
+
+		// Таймауты для операций коммуникации с сервером
+		// (0 для fetch ввиду п.6 задания)
+		const std::chrono::milliseconds sendTimeout { 500 };
+		const std::chrono::microseconds fetchTimeout{ 0 };
 
 		// Контейнер для полученных от сервера данных
 		std::vector<char> data{};
-		bool dataReady{ false };
 
+		// Синхронизация потоков 
 		bool stop{ false };
 		std::mutex dataMutex{};
-		std::condition_variable dmCondition{};
+		std::condition_variable stateChange{};
 	};
 }
