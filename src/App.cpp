@@ -8,14 +8,14 @@
 #include <iostream>
 #include <iterator>
 #include <memory>
-#include <string>
 #include <thread>
-#include <vector>
 
 namespace wsApp
 {
 	void App::run()
 	{
+		SetConsoleCtrlHandler(App::consoleHandler, TRUE);
+
 		std::unique_ptr<wsApp::HTTPClient> client{ 
 			std::make_unique<wsApp::HTTPClient>()
 		};
@@ -39,17 +39,15 @@ namespace wsApp
 		std::thread handleThread{ &App::handleData, this };
 
 		// Программа бесконечно выполняется до нажатия ESC
-		while (!stop)
+		while (!stop.load())
 		{
 			if (GetAsyncKeyState(VK_ESCAPE) & 0x01)
-			{
 				stop = true;
-				stateChange.notify_all();
-			}
 		}
 
 		// Ожидание окончания вывода данных в консоль
 		// и отключение клиента от сервера
+		stateChange.notify_all();
 		queryThread.join();
 		handleThread.join();
 		client->disconnect();
@@ -63,7 +61,7 @@ namespace wsApp
 		std::unique_lock<std::mutex> dataLock{ dataMutex, std::defer_lock };
 		size_t count{ 1 };
 
-		while (!stop)
+		while (!stop.load())
 		{
 			dataLock.lock();
 
@@ -91,7 +89,7 @@ namespace wsApp
 		std::unique_lock<std::mutex> dataLock{ dataMutex, std::defer_lock };
 		int bytesSent{ 0 };
 
-		while (!stop)
+		while (!stop.load())
 		{
 
 			bytesSent = connectedClient.sendRequest(request);
@@ -118,5 +116,13 @@ namespace wsApp
 			dataLock.unlock();
 			stateChange.notify_one();
 		}
+	}
+
+	BOOL WINAPI App::consoleHandler(DWORD ctrlType)
+	{
+		if (ctrlType == CTRL_C_EVENT)
+			stop = true;
+
+		return TRUE;
 	}
 }

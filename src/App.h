@@ -2,6 +2,9 @@
 
 #include "HTTPClient.h"
 
+#include <Windows.h>
+
+#include <atomic>
 #include <chrono>
 #include <condition_variable>
 #include <mutex>
@@ -19,6 +22,8 @@ namespace wsApp
 		void run();
 
 	private:
+		static BOOL WINAPI consoleHandler(DWORD ctrlType);
+
 		// Обработка данных с сервера
 		void handleData();
 
@@ -37,7 +42,7 @@ namespace wsApp
 		std::vector<char> data{};
 
 		// Синхронизация потоков 
-		bool stop{ false };
+		static inline std::atomic<bool> stop{ false };
 		std::mutex dataMutex{};
 		std::condition_variable stateChange{};
 	};

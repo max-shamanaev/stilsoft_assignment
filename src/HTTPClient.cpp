@@ -1,15 +1,12 @@
 #include "HTTPClient.h"
 #include "Utils.h"
 
-#include <WinSock2.h>
 #include <Winerror.h>
 #include <WS2tcpip.h>
 
 #include <algorithm>
 #include <cassert>
-#include <cstdint>
 #include <iterator>
-#include <string>
 #include <sstream>
 
 namespace wsApp
